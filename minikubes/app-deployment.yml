@@ -15,10 +15,39 @@ spec:
     spec:
       containers:
       - name: gestion-produits
-        image: gestion-produits:mysql
-        imagePullPolicy: Never # Pour utiliser l'image locale
+        image: gestion-produits:latest
+        imagePullPolicy: Never
         ports:
         - containerPort: 80
+        env:
+        - name: DB_MYSQL_HOST
+          value: mysql
+        - name: DB_MYSQL_USER
+          valueFrom:
+            secretKeyRef:
+              name: mysql-secret
+              key: user
+        - name: DB_MYSQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-secret
+              key: password
+        - name: DB_MYSQL_NAME
+          value: gestion_produits
+        - name: DB_POSTGRES_HOST
+          value: db-postgres
+        - name: DB_POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: user
+        - name: DB_POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: password
+        - name: DB_POSTGRES_NAME
+          value: gestion_produits
 ---
 apiVersion: v1
 kind: Service
@@ -26,10 +55,9 @@ metadata:
   name: gestion-produits
   namespace: prod
 spec:
-  type: NodePort  # Utilisation de NodePort pour l'accès direct
+  type: ClusterIP
   ports:
   - port: 80
     targetPort: 80
-    nodePort: 30080  # Port accessible depuis l'extérieur (doit être entre 30000-32767)
   selector:
     app: gestion-produits

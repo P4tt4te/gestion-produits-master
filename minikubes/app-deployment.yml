@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gestion-produits
+  namespace: prod
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: gestion-produits
+  template:
+    metadata:
+      labels:
+        app: gestion-produits
+    spec:
+      containers:
+      - name: gestion-produits
+        image: gestion-produits:mysql
+        imagePullPolicy: Never # Pour utiliser l'image locale
+        ports:
+        - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gestion-produits
+  namespace: prod
+spec:
+  type: NodePort  # Utilisation de NodePort pour l'accès direct
+  ports:
+  - port: 80
+    targetPort: 80
+    nodePort: 30080  # Port accessible depuis l'extérieur (doit être entre 30000-32767)
+  selector:
+    app: gestion-produits

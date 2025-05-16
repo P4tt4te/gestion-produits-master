@@ -34,20 +34,6 @@ spec:
               key: password
         - name: DB_MYSQL_NAME
           value: gestion_produits
-        - name: DB_POSTGRES_HOST
-          value: db-postgres
-        - name: DB_POSTGRES_USER
-          valueFrom:
-            secretKeyRef:
-              name: postgres-secret
-              key: user
-        - name: DB_POSTGRES_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: postgres-secret
-              key: password
-        - name: DB_POSTGRES_NAME
-          value: gestion_produits
 ---
 apiVersion: v1
 kind: Service

@@ -5,7 +5,7 @@ services:
   app:
     build: .
     ports:
-      - "80:80"
+      - "5000:80"
     volumes:
       - ./php/www:/var/www/html
     depends_on:
@@ -23,10 +23,10 @@ services:
       - mysql_data:/var/lib/mysql
       - ./database/gestion_produits.sql:/docker-entrypoint-initdb.d/init.sql
     environment:
-      - MYSQL_ROOT_PASSWORD=root
-      - MYSQL_DATABASE=gestion_produits
-      - MYSQL_USER=gestion_produits
-      - MYSQL_PASSWORD=gestion_produits
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: gestion_produits
+      MYSQL_USER: root
+      MYSQL_PASSWORD: root
 
 volumes:
   mysql_data:

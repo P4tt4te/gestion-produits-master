@@ -1,198 +1,188 @@
-# Running the Application with Minikube
+# Déploiement avec Minikube
 
-This guide explains how to run the application locally using Minikube with both development (PostgreSQL) and production (MySQL) environments.
+Ce guide explique comment déployer l'application localement avec Minikube, en configurant deux environnements : production (MySQL) et développement (PostgreSQL).
 
-## Prerequisites
+## Prérequis
 
-- Minikube installed
-- kubectl installed
-- Docker installed
-- Windows PowerShell or Command Prompt
+- Minikube installé
+- kubectl installé
+- Docker installé
+- Windows PowerShell ou Command Prompt
 
-## Environment Setup
+## Configuration Initiale
 
-The application is configured with two environments:
-
-### Development Environment
-- Uses PostgreSQL database
-- Single app instance
-- Accessible via dev.local
-- Development-specific configurations
-
-### Production Environment
-- Uses MySQL database
-- Two app instances (replicas)
-- Accessible via prod.local
-- Production-specific configurations
-
-## Setup Steps
-
-### 1. Start Minikube
+### 1. Démarrer Minikube
 
 ```bash
-minikube start
+# Démarrer Minikube avec suffisamment de ressources
+minikube start --cpus 2 --memory 4096
 ```
 
-### 2. Enable Required Addons
-
-Enable the Ingress addon:
+### 2. Activer les Addons Nécessaires
 
 ```bash
+# Activer l'addon Ingress
 minikube addons enable ingress
+
+# Activer l'addon Storage Provisioner (pour les volumes persistants)
+minikube addons enable storage-provisioner
 ```
 
-### 3. Configure Docker Environment
-
-To build and use local images with Minikube, we need to configure Docker to use Minikube's Docker daemon:
+### 3. Configurer Docker pour Utiliser le Daemon de Minikube
 
 ```bash
-# Configure your terminal to use Minikube's Docker daemon
+# Configurer l'environnement Docker pour utiliser Minikube
 minikube docker-env | Invoke-Expression
 ```
 
-Note: You'll need to run this command in each new terminal window where you want to work with Docker images in Minikube.
+Note : Cette commande doit être exécutée dans chaque nouveau terminal où vous souhaitez travailler avec les images Docker dans Minikube.
 
-### 4. Build Docker Image
+## Construction de l'Image
 
 ```bash
-# Build the image directly in Minikube's environment
+# Construire l'image dans l'environnement Minikube
 docker build -t gestion-produits:latest .
 ```
 
-Note: When building images this way, they will be automatically available to Minikube without needing to push to a registry.
+## Déploiement
 
-### 5. Update Deployment Files
-
-Make sure your deployment files (k8s/dev/app-deployment.yaml and k8s/prod/app-deployment.yaml) use the correct image name:
-
-```yaml
-image: gestion-produits:latest
-imagePullPolicy: Never  # Important: This tells Kubernetes to always use the local image
-```
-
-### 6. Deploy the Application
+### 1. Créer les Namespaces
 
 ```bash
-# Create namespaces
 kubectl apply -f k8s/namespaces.yaml
+```
 
-# Deploy development environment
-kubectl apply -f k8s/dev/
+### 2. Créer les Secrets
 
-# Deploy production environment
+```bash
+kubectl apply -f k8s/secrets.yaml
+```
+
+### 3. Déployer l'Environnement de Production
+
+```bash
 kubectl apply -f k8s/prod/
+```
 
-# Apply ingress configuration
+### 4. Déployer l'Environnement de Développement
+
+```bash
+kubectl apply -f k8s/dev/
+```
+
+### 5. Configurer l'Ingress
+
+```bash
 kubectl apply -f k8s/ingress.yaml
 ```
 
-### 7. Start Minikube Tunnel
+### 6. Démarrer le Tunnel Minikube
 
-Open a new terminal and run:
-
+Dans un nouveau terminal, exécutez :
 ```bash
 minikube tunnel
 ```
+Gardez ce terminal ouvert pour maintenir l'accès aux services via Ingress.
 
-Keep this terminal open as it's required for ingress access.
+## Accès aux Applications
 
-### 8. Verify Deployment
+### Configuration des Hôtes
 
-Check if all pods are running in both environments:
+Ajoutez les entrées suivantes à votre fichier hosts (`C:\Windows\System32\drivers\etc\hosts`) :
+```
+127.0.0.1 dev.domaine.fr
+127.0.0.1 www.domaine.fr
+```
+
+### URLs d'Accès
+- Production : https://www.domaine.fr
+- Développement : https://dev.domaine.fr
+
+## Vérification du Déploiement
+
+### Vérifier les Pods
 
 ```bash
-# Check development environment
-kubectl get pods -n dev
-
-# Check production environment
+# Vérifier les pods de production
 kubectl get pods -n prod
+
+# Vérifier les pods de développement
+kubectl get pods -n dev
 ```
 
-You should see output similar to:
-```
-# Development
-NAME                        READY   STATUS    RESTARTS   AGE
-app-xxxxxxxxxx-xxxxx        1/1     Running   0          XXs
-postgres-xxxxxxxxxx-xxxxx   1/1     Running   0          XXs
-
-# Production
-NAME                        READY   STATUS    RESTARTS   AGE
-app-xxxxxxxxxx-xxxxx        1/1     Running   0          XXs
-app-xxxxxxxxxx-yyyyy        1/1     Running   0          XXs
-mysql-xxxxxxxxxx-xxxxx      1/1     Running   0          XXs
-```
-
-## Accessing the Application
-
-The application is configured with the following ingress hosts:
-- Development environment: http://dev.local
-- Production environment: http://prod.local
-
-To access these URLs, add the following entries to your hosts file (`C:\Windows\System32\drivers\etc\hosts`):
-
-```
-127.0.0.1 dev.local
-127.0.0.1 prod.local
-```
-
-## Environment-Specific Configurations
-
-### Development Environment
-- Database: PostgreSQL
-- Host: postgres:5432
-- Single app instance
-- Development-specific environment variables
-
-### Production Environment
-- Database: MySQL
-- Host: mysql:3306
-- Two app instances for high availability
-- Production-specific environment variables
-
-## Troubleshooting
-
-### Image Pull Issues
-If you encounter `ImagePullBackOff` errors:
-1. Make sure you've configured the terminal to use Minikube's Docker daemon (`minikube docker-env | Invoke-Expression`)
-2. Verify that the image was built successfully (`docker images`)
-3. Ensure the deployment YAML files use `imagePullPolicy: Never`
-4. Try rebuilding the image and redeploying the pods
-
-### Docker Environment Issues
-If you have problems with Docker:
-1. Each new terminal needs to be configured with `minikube docker-env | Invoke-Expression`
-2. If you restart Minikube, you'll need to:
-   - Reconfigure the Docker environment
-   - Rebuild the images
-   - Redeploy the pods
-
-### Database Connection Issues
-- For development (PostgreSQL):
-  1. Check if the postgres pod is running
-  2. Verify the database credentials in the app deployment
-  3. Check postgres logs: `kubectl logs -n dev deployment/postgres`
-
-- For production (MySQL):
-  1. Check if the mysql pod is running
-  2. Verify the database credentials in the app deployment
-  3. Check mysql logs: `kubectl logs -n prod deployment/mysql`
-
-### Access Issues
-If you can't access the application:
-1. Ensure the Minikube tunnel is running
-2. Verify that the ingress controller is working
-3. Check if the hosts file is properly configured
-4. Verify the correct domain is being used for each environment
-
-## Cleanup
-
-To clean up the resources:
+### Vérifier les Services
 
 ```bash
-# Delete all resources in both namespaces
-kubectl delete -f k8s/dev/
-kubectl delete -f k8s/prod/
+# Vérifier les services de production
+kubectl get svc -n prod
 
-# Stop Minikube
+# Vérifier les services de développement
+kubectl get svc -n dev
+```
+
+## Surveillance et Debugging
+
+### Logs des Applications
+
+```bash
+# Logs de production
+kubectl logs -n prod -l app=app-prod
+
+# Logs de développement
+kubectl logs -n dev -l app=app-dev
+```
+
+### Logs des Bases de Données
+
+```bash
+# Logs MySQL (production)
+kubectl logs -n prod -l app=mysql
+
+# Logs PostgreSQL (développement)
+kubectl logs -n dev -l app=postgres
+```
+
+### Accès Direct aux Bases de Données
+
+```bash
+# Accès à MySQL (production)
+kubectl port-forward -n prod svc/mysql 3306:3306
+
+# Accès à PostgreSQL (développement)
+kubectl port-forward -n dev svc/postgres 5432:5432
+```
+
+## Problèmes Courants
+
+### ImagePullBackOff
+Si vous rencontrez des erreurs ImagePullBackOff :
+1. Vérifiez que vous avez bien configuré Docker pour utiliser Minikube (`minikube docker-env | Invoke-Expression`)
+2. Reconstruisez l'image : `docker build -t gestion-produits:latest .`
+3. Vérifiez que `imagePullPolicy: Never` est défini dans les déploiements
+
+### Problèmes de Connexion
+Si vous ne pouvez pas accéder aux applications :
+1. Vérifiez que le tunnel Minikube est actif
+2. Vérifiez les entrées dans le fichier hosts
+3. Vérifiez l'état de l'Ingress : `kubectl get ingress -A`
+
+## Nettoyage
+
+Pour arrêter et nettoyer l'environnement :
+
+```bash
+# Supprimer les déploiements
+kubectl delete -f k8s/prod/
+kubectl delete -f k8s/dev/
+kubectl delete -f k8s/ingress.yaml
+kubectl delete -f k8s/secrets.yaml
+
+# Arrêter le tunnel Minikube (dans le terminal dédié)
+Ctrl+C
+
+# Arrêter Minikube
 minikube stop
+
+# Optionnel : Supprimer le cluster Minikube
+minikube delete
 ``` 

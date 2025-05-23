@@ -6,25 +6,28 @@ metadata:
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /
     nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    # Utiliser des ports plus élevés pour éviter les problèmes de permissions Windows
+    nginx.ingress.kubernetes.io/use-port-in-redirects: "true"
 spec:
+  ingressClassName: nginx
   rules:
-    - host: dev.local
+    - host: dev.domaine.fr
       http:
         paths:
           - path: /
             pathType: Prefix
             backend:
               service:
-                name: app
+                name: app-dev.dev
                 port:
                   number: 80
-    - host: prod.local
+    - host: www.domaine.fr
       http:
         paths:
           - path: /
             pathType: Prefix
             backend:
               service:
-                name: app
+                name: app-prod.prod
                 port:
                   number: 80

@@ -1,45 +1,59 @@
 # app-deployment.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: app-prod
+  namespace: prod
+spec:
+  selector:
+    app: app-prod
+  ports:
+    - port: 80
+      targetPort: 80
+  type: ClusterIP
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: app
+  name: app-prod
   namespace: prod
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: app
+      app: app-prod
   template:
     metadata:
       labels:
-        app: app
+        app: app-prod
     spec:
       containers:
-        - name: app
-          image: gestion-produits:latest
-          imagePullPolicy: Never
-          env:
-            - name: DB_TYPE
-              value: mysql
-            - name: DB_HOST
-              value: mysql
-            - name: DB_NAME
-              value: gestion_produits
-            - name: DB_USERNAME
-              value: root
-            - name: DB_PASSWORD
-              value: root
-          ports:
-            - containerPort: 80
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: app
-  namespace: prod
-spec:
-  selector:
-    app: app
-  ports:
-    - port: 80
-      targetPort: 80
+      - name: app
+        image: gestion-produits:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 80
+        env:
+        - name: DB_HOST
+          value: mysql
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: mysql-secret
+              key: username
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-secret
+              key: password
+        - name: DB_NAME
+          value: gestion_produits
+        - name: DB_TYPE
+          value: mysql
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"

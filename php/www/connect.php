@@ -1,6 +1,6 @@
 <?php
     $host = getenv('DB_HOST') ?: "db";
-    $username = getenv('DB_USERNAME') ?: "root";
+    $username = getenv('DB_USER') ?: "root";
     $password = getenv('DB_PASSWORD') ?: "root";
     $db = getenv('DB_NAME') ?: "gestion_produits";
     // pgsql or mysql

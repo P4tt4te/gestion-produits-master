@@ -9,6 +9,8 @@ spec:
   selector:
     matchLabels:
       app: mysql
+  strategy:
+    type: Recreate
   template:
     metadata:
       labels:
@@ -24,13 +26,29 @@ spec:
               value: root
           ports:
             - containerPort: 3306
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
           volumeMounts:
             - name: mysql-data
               mountPath: /var/lib/mysql
+            - name: mysql-init
+              mountPath: /docker-entrypoint-initdb.d
+          args:
+            - --default-authentication-plugin=mysql_native_password
+            - --character-set-server=utf8mb4
+            - --collation-server=utf8mb4_unicode_ci
       volumes:
         - name: mysql-data
           persistentVolumeClaim:
             claimName: mysql-pvc
+        - name: mysql-init
+          configMap:
+            name: mysql-init-script
 ---
 apiVersion: v1
 kind: Service
@@ -55,3 +73,81 @@ spec:
   resources:
     requests:
       storage: 1Gi
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-init-script
+  namespace: prod
+data:
+  init.sql: |
+    -- MySQL dump 10.13  Distrib 5.7.25, for Linux (x86_64)
+    --
+    -- Host: 127.0.0.1    Database: gestion_produits
+    -- ------------------------------------------------------
+    -- Server version	5.5.62
+
+    /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+    /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+    /*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+    /*!40101 SET NAMES utf8 */;
+    /*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
+    /*!40103 SET TIME_ZONE='+00:00' */;
+    /*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
+    /*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
+    /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
+    /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
+
+    --
+    -- Current Database: `gestion_produits`
+    --
+
+    CREATE DATABASE /*!32312 IF NOT EXISTS*/ `gestion_produits` /*!40100 DEFAULT CHARACTER SET latin1 */;
+
+    USE `gestion_produits`;
+
+    --
+    -- Table structure for table `produits`
+    --
+
+    DROP TABLE IF EXISTS `produits`;
+    /*!40101 SET @saved_cs_client     = @@character_set_client */;
+    /*!40101 SET character_set_client = utf8 */;
+    CREATE TABLE `produits` (
+      `PRO_id` int(11) NOT NULL AUTO_INCREMENT,
+      `PRO_lib` varchar(200) NOT NULL,
+      `PRO_prix` decimal(10,2) NOT NULL,
+      `PRO_description` text,
+      PRIMARY KEY (`PRO_id`)
+    ) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8;
+    /*!40101 SET character_set_client = @saved_cs_client */;
+
+    --
+    -- Table structure for table `ressources`
+    --
+
+    DROP TABLE IF EXISTS `ressources`;
+    /*!40101 SET @saved_cs_client     = @@character_set_client */;
+    /*!40101 SET character_set_client = utf8 */;
+    CREATE TABLE `ressources` (
+      `RE_id` int(11) NOT NULL AUTO_INCREMENT,
+      `RE_type` varchar(100) NOT NULL,
+      `RE_url` varchar(1000) NOT NULL,
+      `RE_nom` varchar(100) DEFAULT NULL,
+      `PRO_id` int(11) NOT NULL,
+      PRIMARY KEY (`RE_id`),
+      KEY `ressources_produits_FK` (`PRO_id`),
+      CONSTRAINT `ressources_produits_FK` FOREIGN KEY (`PRO_id`) REFERENCES `produits` (`PRO_id`)
+    ) ENGINE=InnoDB AUTO_INCREMENT=56 DEFAULT CHARSET=utf8;
+    /*!40101 SET character_set_client = @saved_cs_client */;
+
+    --
+    -- Table structure for table `utilisateurs`
+    --
+
+    DROP TABLE IF EXISTS `utilisateurs`;
+    /*!40101 SET @saved_cs_client     = @@character_set_client */;
+    /*!40101 SET character_set_client = utf8 */;
+    CREATE TABLE `utilisateurs` (
+      `US_id` int(11) NOT NULL AUTO_INCREMENT,
+      `

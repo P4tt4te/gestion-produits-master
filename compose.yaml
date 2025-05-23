@@ -1,19 +1,42 @@
 version: '3'
 
 services:
-  # Service PHP/Apache
-  app:
+  # Service PHP/Apache - Production (MySQL)
+  app-prod:
     build: .
     ports:
       - "5000:80"
     volumes:
       - ./php/www:/var/www/html
     depends_on:
-      - db
+      - mysql
+    environment:
+      DB_HOST: mysql
+      DB_USER: root
+      DB_PASSWORD: root
+      DB_NAME: gestion_produits
+      DB_TYPE: mysql
     restart: always
 
-  # Service MySQL
-  db:
+  # Service PHP/Apache - Development (PostgreSQL)
+  app-dev:
+    build: .
+    ports:
+      - "5001:80"
+    volumes:
+      - ./php/www:/var/www/html
+    depends_on:
+      - postgres
+    environment:
+      DB_HOST: postgres
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: gestion_produits
+      DB_TYPE: pgsql
+    restart: always
+
+  # Service MySQL (Production)
+  mysql:
     image: mysql:8.0
     command: --default-authentication-plugin=mysql_native_password
     restart: always
@@ -28,5 +51,20 @@ services:
       MYSQL_USER: root
       MYSQL_PASSWORD: root
 
+  # Service PostgreSQL (Development)
+  postgres:
+    image: postgres:15
+    restart: always
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/gestion_produits_pg.sql:/docker-entrypoint-initdb.d/init.sql
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: gestion_produits
+
 volumes:
   mysql_data:
+  postgres_data:

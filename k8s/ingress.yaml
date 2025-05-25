@@ -3,6 +3,7 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: app-ingress
+  namespace: prod
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /
     nginx.ingress.kubernetes.io/ssl-redirect: "false"
@@ -18,7 +19,8 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: app-dev.dev
+                name: app-dev-svc
+                namespace: dev
                 port:
                   number: 80
     - host: www.domaine.fr
@@ -28,6 +30,7 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: app-prod.prod
+                name: app-prod-svc
+                namespace: prod
                 port:
                   number: 80

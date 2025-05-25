@@ -3,6 +3,11 @@
     include 'connect.php';
     include 'fonctions.php';
     secu();
+
+    // Définir les noms de colonnes selon le type de base de données
+    $id_column = $db_type == "pgsql" ? "pro_id" : "PRO_id";
+    $lib_column = $db_type == "pgsql" ? "pro_lib" : "PRO_lib";
+    $prix_column = $db_type == "pgsql" ? "pro_prix" : "PRO_prix";
 ?><!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -29,18 +34,18 @@
             </thead>
             <tbody>
                 <?php
-                    $sql = "SELECT * FROM produits ORDER BY PRO_lib ASC";
+                    $sql = "SELECT * FROM produits ORDER BY $lib_column ASC";
                     $res = $db->query($sql);
                     if ($res == false) {
                         echo "<tr><td colspan=\"3\">Aucun produit trouvé</td></tr>";
                     }
                     // Affichage des produits
                     while ($produit = $res->fetch(PDO::FETCH_ASSOC)) {
-                        $prix = number_format($produit['PRO_prix'], 2, ',', ' ');
+                        $prix = number_format($produit[$prix_column], 2, ',', ' ');
                         
-                        echo '<tr onClick="goto(\'produit.php?id='.$produit['PRO_id'].'\')">';
-                        echo "<td class=\"text-center\">".$produit['PRO_id']."</td>";
-                        echo "<td>".$produit['PRO_lib']."</td>";
+                        echo '<tr onClick="goto(\'produit.php?id='.$produit[$id_column].'\')">';
+                        echo "<td class=\"text-center\">".$produit[$id_column]."</td>";
+                        echo "<td>".$produit[$lib_column]."</td>";
                         echo "<td class=\"text-right\">".$prix."&nbsp;€</td>";
                         echo "</tr>";
                     }

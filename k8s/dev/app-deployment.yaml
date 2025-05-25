@@ -1,0 +1,59 @@
+# app-deployment.yaml (exemple pour dev)
+apiVersion: v1
+kind: Service
+metadata:
+  name: app-dev-svc
+  namespace: dev
+spec:
+  selector:
+    app: app-dev
+  ports:
+    - port: 80
+      targetPort: 80
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-dev
+  namespace: dev
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: app-dev
+  template:
+    metadata:
+      labels:
+        app: app-dev
+    spec:
+      containers:
+      - name: app
+        image: gestion-produits:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 80
+        env:
+        - name: DB_HOST
+          value: postgres
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: username
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: password
+        - name: DB_NAME
+          value: gestion_produits
+        - name: DB_TYPE
+          value: pgsql
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"

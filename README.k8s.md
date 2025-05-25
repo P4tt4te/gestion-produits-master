@@ -72,8 +72,14 @@ kubectl apply -f k8s/dev/
 
 ### 5. Configurer l'Ingress
 
+Créez deux Ingress séparés, un pour chaque namespace :
+
 ```bash
-kubectl apply -f k8s/ingress.yaml
+# Créer l'Ingress pour l'environnement de développement
+kubectl apply -f k8s/dev/ingress.yaml
+
+# Créer l'Ingress pour l'environnement de production
+kubectl apply -f k8s/prod/ingress.yaml
 ```
 
 ### 6. Démarrer le Tunnel Minikube
@@ -95,10 +101,23 @@ Ajoutez les entrées suivantes à votre fichier hosts (`C:\Windows\System32\driv
 ```
 
 ### URLs d'Accès
-- Production : https://www.domaine.fr
-- Développement : https://dev.domaine.fr
+- Production : http://www.domaine.fr
+- Développement : http://dev.domaine.fr
 
 ## Vérification du Déploiement
+
+### Vérifier les Ingress
+
+```bash
+# Vérifier tous les Ingress
+kubectl get ingress --all-namespaces
+
+# Vérifier l'Ingress de production
+kubectl get ingress -n prod
+
+# Vérifier l'Ingress de développement
+kubectl get ingress -n dev
+```
 
 ### Vérifier les Pods
 
@@ -174,8 +193,8 @@ Pour arrêter et nettoyer l'environnement :
 # Supprimer les déploiements
 kubectl delete -f k8s/prod/
 kubectl delete -f k8s/dev/
-kubectl delete -f k8s/ingress.yaml
 kubectl delete -f k8s/secrets.yaml
+kubectl delete -f k8s/namespaces.yaml
 
 # Arrêter le tunnel Minikube (dans le terminal dédié)
 Ctrl+C

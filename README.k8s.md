@@ -15,7 +15,7 @@ Ce guide explique comment déployer l'application localement avec Minikube, en c
 
 ```bash
 # Démarrer Minikube avec suffisamment de ressources
-minikube start --cpus 2 --memory 4096
+minikube start --nodes 3 --cpus 2 --memory 4096
 ```
 
 ### 2. Activer les Addons Nécessaires
